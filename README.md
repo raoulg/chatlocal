@@ -1,26 +1,27 @@
-## Table of Contents
+## Table of Contents 📑
 
-- [Getting Started](#getting-started)
-   - [Prerequisites](#prerequisites)
-   - [Installation](#installation)
-- [Example Usage](#example-usage)
-   - [Example Output](#example-output)
-- [Note](#note)
-- [Contributions](#contributions)
-- [License](#license)
+- [Getting Started](#getting-started) 🚀
+   - [Prerequisites](#prerequisites) 📋
+   - [Installation](#installation) 🔧
+- [Example Usage](#example-usage) 💡
+   - [Example Output](#example-output) 🖥️
+- [Note](#note) 📌
+- [Contributions](#contributions) 🤝
+- [License](#license) ⚖️
 
-# Chatlocal
+
+# Chatlocal 💬
 Chatlocal is a Python library designed to interact with your local files and provide AI-powered question-answering capabilities. The library can read your local documents, vectorize them, and then answer questions using the indexed documents. The library uses the FAISS library for efficient similarity search and LangChain for retrieval-based question answering.
 
-## Getting Started
+## Getting Started 🚀
 
 These instructions will get you a copy of the project up and running on your local machine.
 
-### Prerequisites
+### Prerequisites 📋
 
 Chatlocal requires Python 3.9.16 or higher.
 
-### Installation
+### Installation 🔧
 
 We recommend using Poetry for managing Python dependencies. If you do not have Poetry installed, you can install it with the following command on Linux, macOS and Windows (WSL2):
 
@@ -42,7 +43,7 @@ Then set your OpenAI API key (if you don't have one, get one [here](https://beta
 export OPENAI_API_KEY=....
 ```
 
-## Example Usage
+## Example Usage 💡
 
 There are two scripts that showcase the usage of the library:
 
@@ -77,8 +78,8 @@ There are two scripts that showcase the usage of the library:
 
    Then, you can start typing your questions. Type `Q` to quit the interactive prompt.
 
-### Example Output
-```
+### Example Output 🖥️
+
 ❯ python dev/qa.py
 Ask a question: (Q to quit) Kun je lineare regressie uitleggen?
 
@@ -134,7 +135,7 @@ Sources: /code/curriculum/Workflow/Belangrijkste Afspraken.md,
 ```
 
 
-## Note
+## Note 📌
 The library stores indexed vectors and document store in the `~/.cache/chatlocal` directory.
 This can be changed by setting the `CACHE_DIR` environment variable.
 eg
@@ -142,10 +143,10 @@ eg
 ❯ export CACHE_DIR=/tmp/chatlocal`
 ```
 
-## Contributions
+## Contributions 🤝
 
 Contributions are welcomed. Please create a pull request with your changes.
 
-## License
+## License ⚖️
 
 This project is licensed under the MIT License. See the LICENSE file for details.
