@@ -1,10 +1,13 @@
 [tool.poetry]
 name = "chatlocal"
-version = "0.1.0"
+version = "0.1.1"
 description = "chat with your local files"
 authors = ["Raoul Grouls <Raoul.Grouls@han.nl>"]
 license = "MIT"
 readme = "README.md"
+
+[tool.poetry.urls]
+GitHub = "https://github.com/raoulg/chatlocal"
 
 [tool.poetry.dependencies]
 python = "^3.9.16"

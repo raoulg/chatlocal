@@ -13,6 +13,8 @@
 # Chatlocal 💬
 Chatlocal is a Python library designed to interact with your local files and provide AI-powered question-answering capabilities. The library can read your local documents, vectorize them, and then answer questions using the indexed documents. The library uses the FAISS library for efficient similarity search and LangChain for retrieval-based question answering.
 
+Currently, this project is in an alpha stage and is not ready for production use. We are working on improving the library and adding more features. However, you can interact with the library through the command line and ask questions to your indexed documents, currently only .txt or .md files are supported.
+
 ## Getting Started 🚀
 
 These instructions will get you a copy of the project up and running on your local machine.
@@ -80,6 +82,7 @@ There are two scripts that showcase the usage of the library:
 
 ### Example Output 🖥️
 
+```bash
 ❯ python dev/qa.py
 Ask a question: (Q to quit) Kun je lineare regressie uitleggen?
 
@@ -103,7 +106,7 @@ Simple or multiple.
 Sources: /code/curriculum/Nuggets/Linear Regression.md, /code/curriculum/Nuggets/Simple Linear Regression.md
 ```
 
-```
+```bash
 Ask a question: (Q to quit) What is kullback leibler?
 Answer: Kullback-Leibler Divergence is a measure of difference between two probability distributions
 and can be considered as a similarity or distance measure, but it is not a distance in the strict
@@ -114,7 +117,7 @@ Cross Entropy and is a special case of Bregman divergence.
 Sources: /code/curriculum/Nuggets/Kullback-Leibler Divergence.md, /code/curriculum/Nuggets/Similarity or Distance Measures.md
 ```
 
-```
+```bash
 Ask a question: (Q to quit) Wat zijn de belangrijkste themas in deze aantekeningen?
 Answer: The main themes in these notes are:
 - Importance of not throwing away notes
