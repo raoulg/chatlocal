@@ -2,22 +2,26 @@ from __future__ import annotations
 
 import pickle
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Dict, List
 
 import faiss
-from langchain.embeddings import OpenAIEmbeddings
+from langchain.embeddings import HuggingFaceEmbeddings, OpenAIEmbeddings
+from langchain.embeddings.base import Embeddings
 from langchain.text_splitter import CharacterTextSplitter
 from langchain.vectorstores import FAISS
 from loguru import logger
 
 from chatlocal.dataloader import DataLoader
-from chatlocal.settings import VectorStoreSettings
+from chatlocal.settings import ModelType, VectorStoreSettings
 
 if TYPE_CHECKING:
     from dataloader import DataStore
 
 storesettings = VectorStoreSettings(
-    chunk_size=1500, separator="\n", store_file=Path("vectorstore.pkl")
+    chunk_size=1500,
+    separator="\n",
+    store_file=Path("vectorstore.pkl"),
+    modeltype=ModelType.HUGGINGFACE,
 )
 
 
@@ -28,12 +32,14 @@ class VectorStore:
         self.text_splitter = CharacterTextSplitter(
             chunk_size=self.chunk_size, separator=self.separator
         )
+        self.modeltype = settings.modeltype
         self.cache = settings.cache
         self.store_path = settings.cache / settings.store_file
-        self.index_path = settings.cache / "docs.index"
+        self.index_path = settings.cache / settings.store_file.with_suffix(".index")
         self.initialized = False
+        self.stepsize = 100
 
-    def build(self, datastore: DataStore) -> None:
+    def chunk_datastore(self, datastore: DataStore) -> Dict[str, List[str]]:
         docs = []
         metadatas = []
         logger.info(f"Building vectorstore from {len(datastore)} documents")
@@ -41,11 +47,28 @@ class VectorStore:
             splits = self.text_splitter.split_text(doc.text)
             docs.extend(splits)
             metadatas.extend([{"source": doc.source}] * len(splits))
-        logger.success("Processed datastore")
+        logger.success(f"Processed datastore into {len(docs)} chunks.")
+        return {"docs": docs, "metadatas": metadatas}
 
+    def create_store(self, datastore: DataStore) -> None:
+        embedding = self.get_embeddings()
+        chunked = self.chunk_datastore(datastore)
+        docs = chunked["docs"]
+        metadatas = chunked["metadatas"]
+
+        logger.info(f"Initailizing vectorstore for first {self.stepsize} documents")
         self.store = FAISS.from_texts(
-            texts=docs, embedding=OpenAIEmbeddings(), metadatas=metadatas  # type: ignore
+            texts=docs[: self.stepsize], embedding=embedding, metadatas=metadatas[: self.stepsize]  # type: ignore
         )
+        for i in range(self.stepsize, len(docs), self.stepsize):
+            logger.info(f"Adding range {i}-{i+self.stepsize} to vectorstore")
+            self.store.add_texts(
+                texts=docs[i : i + self.stepsize],
+                embedding=embedding,
+                metadatas=metadatas[i : i + self.stepsize],
+            )
+
+        logger.success("Initialized vectorstore")
         self.initialized = True
 
     def add_documents(self, datastore: DataStore) -> None:
@@ -62,6 +85,21 @@ class VectorStore:
 
         self.store.add_texts(texts=docs, metadatas=metadatas)
 
+    def get_embeddings(self) -> Embeddings:
+        if self.modeltype == ModelType.HUGGINGFACE:
+            model_name = "sentence-transformers/all-mpnet-base-v2"
+            model_kwargs = {"device": "cpu"}
+            encode_kwargs = {"normalize_embeddings": False}
+            hf = HuggingFaceEmbeddings(
+                model_name=model_name,
+                model_kwargs=model_kwargs,
+                encode_kwargs=encode_kwargs,
+            )
+            return hf
+        if self.modeltype == ModelType.OPENAI:
+            return OpenAIEmbeddings()
+        raise ValueError("Model type not supported")
+
     def get(self) -> FAISS:
         return self.store
 
@@ -71,7 +109,7 @@ class VectorStore:
         self.store.index = None
         with open(self.store_path, "wb") as f:
             pickle.dump(self.store, f)
-        logger.success(f"Saving vectorstore to {self.store_path}")
+        logger.success(f"Saved vectorstore to {self.store_path} and {self.index_path}")
 
     def load(self, store_path: Path) -> None:
         """Load a pickled FAISS store"""
@@ -87,5 +125,11 @@ class VectorStore:
     ) -> VectorStore:
         """Construct a VectorStore from a DataStore."""
         vectorstore = cls(settings=settings)  # type: ignore
-        vectorstore.build(datastore=dataloader.get_datastore())
+        vectorstore.create_store(datastore=dataloader.get_datastore())
         return vectorstore
+
+    def __str__(self) -> str:
+        return "\n".join(f"{k}: {v}" for k, v in self.__dict__.items())
+
+    def __repr__(self) -> str:
+        return "\n".join(f"{k}: {v}" for k, v in self.__dict__.items())
