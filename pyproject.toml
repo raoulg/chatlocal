@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "chatlocal"
-version = "0.1.1"
+version = "0.1.2"
 description = "chat with your local files"
 authors = ["Raoul Grouls <Raoul.Grouls@han.nl>"]
 license = "MIT"
@@ -11,13 +11,17 @@ GitHub = "https://github.com/raoulg/chatlocal"
 
 [tool.poetry.dependencies]
 python = "^3.9.16"
-langchain = "^0.0.192"
+langchain = "^0.0.216"
 openai = "^0.27.8"
 faiss-cpu = "^1.7.4"
 streamlit = "^1.23.1"
 streamlit-chat = "^0.0.2.2"
 tiktoken = "^0.4.0"
 loguru = "^0.7.0"
+python-docx = "^0.8.11"
+sentence-transformers = "^2.2.2"
+llama-cpp-python = "^0.1.66"
+pdftotext = "^2.2.2"
 
 [tool.poetry.group.dev.dependencies]
 black = "^23.3.0"
