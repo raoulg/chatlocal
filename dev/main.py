@@ -1,5 +1,7 @@
-from chatlocal import DataLoader, VectorStore, VectorStoreSettings
+from chatlocal import DataLoader, VectorStore, VectorStoreSettings, ModelType
 from pathlib import Path
+import click
+
 
 
 def main():
@@ -8,7 +10,7 @@ def main():
     dataloader.load_files(docpath)
 
     storesettings = VectorStoreSettings(
-    chunk_size=1500, separator="\n", store_file=Path("vectorstore.pkl")
+    chunk_size=1500, separator="\n", store_file=Path("vectorstore.pkl"), modeltype=ModelType.OPENAI
     )
 
     vectorstore = VectorStore(settings = storesettings)
