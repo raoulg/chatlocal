@@ -21,7 +21,7 @@ storesettings = VectorStoreSettings(
     chunk_size=1500,
     separator="\n",
     store_file=Path("vectorstore.pkl"),
-    modeltype=ModelType.HUGGINGFACE,
+    modeltype=ModelType.OPENAI,
 )
 
 
