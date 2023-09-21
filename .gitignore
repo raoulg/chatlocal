@@ -1,6 +1,7 @@
-/dev/*
 .pytest_cache/*
 */__pycache__/*
 */*.pyc
 /dist/*
 .mypy_cache/*
+.pdm-python
+.python-version
