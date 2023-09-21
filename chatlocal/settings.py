@@ -73,6 +73,10 @@ class Document(FormattedBase):
     text: str
     source: Path
 
+class Chunk(BaseModel):
+    docs: list[str]
+    metadatas: list[str]
+
 
 class ModelType(Enum):
     OPENAI = "openai"
@@ -106,9 +110,24 @@ class VectorStoreSettings(FormattedBase):
     modeltype: ModelType
 
     @model_validator(mode="after")
-    def check_passwords_match(self) -> VectorStoreSettings:
+    def check_folder(self) -> VectorStoreSettings:
         cache = self.cache
         if not cache.exists():
             logger.info(f"cache did not exist. Creating at {cache}.")
             cache.mkdir(parents=True)
+        return self
+
+class UserConfig(FormattedBase):
+    folder: Path
+    filetypes: list[str]
+    store_file: Path = Path("vectorstore.pkl")
+    chunk_size: int = 1500
+
+    @model_validator(mode="after")
+    def check_folder(self) -> UserConfig:
+        folder = self.folder
+        if not folder.exists():
+            logger.error(f"folder {folder} does not exist")
+        logger.info(f"using folder {folder}")
+
         return self
