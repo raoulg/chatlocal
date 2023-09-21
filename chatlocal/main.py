@@ -8,7 +8,10 @@ from chatlocal.settings import UserConfig
 
 
 def build_vectorstore() -> None:
-    userconfig = UserConfig(**read_toml())
+    cfg = read_toml()
+    userconfig = UserConfig(**cfg)
+    userconfig.folder = userconfig.folder.expanduser().resolve()
+
     logger.info(f"using folder {userconfig.folder} to build vectorstore.")
 
     filetypes = [FileType(ft) for ft in userconfig.filetypes]
@@ -40,3 +43,5 @@ def build_vectorstore() -> None:
     vectorstore.save()
     logger.success(f"Saved vectorstore to {vectorstore.store_path}")
 
+if __name__ == "__main__":
+    build_vectorstore()
