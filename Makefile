@@ -1,16 +1,20 @@
 .PHONY: help install test lint format
 
+deps-mac:
+	brew install poppler swig
+
+deps-linux:
+	apt install build-essential libpoppler-cpp-dev pkg-config
 
 install:
-	poetry install
+	pdm install
 
 test:
-	poetry run pytest
+	pdm run pytest
 
 lint:
-	poetry run flake8 chatlocal
-	poetry run mypy chatlocal
+	pdm run ruff chatlocal --fix
+	pdm run mypy chatlocal
 
 format:
-	poetry run isort -v chatlocal
-	poetry run black chatlocal
+	pdm run black chatlocal

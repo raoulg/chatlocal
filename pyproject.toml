@@ -1,39 +1,61 @@
-[tool.poetry]
+[project]
+authors = [
+  {email = "Raoul.Grouls@han.nl", name = "Raoul Grouls"},
+]
+
+dependencies = [
+    "langchain>=0.0.295",
+    "openai>=0.28.0",
+    "faiss-cpu>=1.7.4",
+    "streamlit>=1.12.0",
+    "loguru>=0.7.2",
+    "pdftotext>=2.2.2",
+    "streamlit-chat>=0.1.1",
+    "tiktoken>=0.5.1",
+    "python-docx>=0.8.11",
+    "toml>=0.10.2",
+]
+
+description = "chat with your local files"
+license = {text = "MIT"}
 name = "chatlocal"
 version = "0.1.2"
-description = "chat with your local files"
-authors = ["Raoul Grouls <Raoul.Grouls@han.nl>"]
-license = "MIT"
 readme = "README.md"
+requires-python = ">=3.9, <3.11"
 
-[tool.poetry.urls]
+[project.urls]
 GitHub = "https://github.com/raoulg/chatlocal"
 
-[tool.poetry.dependencies]
-python = "^3.9.16"
-langchain = "^0.0.216"
-openai = "^0.27.8"
-faiss-cpu = "^1.7.4"
-streamlit = "^1.23.1"
-streamlit-chat = "^0.0.2.2"
-tiktoken = "^0.4.0"
-loguru = "^0.7.0"
-python-docx = "^0.8.11"
-sentence-transformers = "^2.2.2"
-llama-cpp-python = "^0.1.66"
-pdftotext = "^2.2.2"
+[tool]
 
-[tool.poetry.group.dev.dependencies]
-black = "^23.3.0"
-flake8 = "^6.0.0"
-isort = "^5.12.0"
-mypy = "^1.3.0"
-pytest = "^7.3.1"
-pep8-naming = "^0.13.3"
-flake8-annotations = "^3.0.1"
-jupyter = "^1.0.0"
-click = "^8.1.3"
+[tool.ruff]
+ignore = [
+  "ANN101",
+  "ANN102",
+  "D",
+  "FIX002",
+  "PGH003"
+]
+include = ["**/pyproject.toml", "*.ipynb", "*.py", "*.pyi"]
+line-length = 88
+select = ["ALL"]
 
+[tool.tomlsort]
+# In our context, arrays often are misused as sets, so their order doesn't matter.
+# Sort all key-like entries lexicographically in increasing order.
+all = true
+in_place = true
+trailing_comma_inline_array = true
+
+[tool.pdm.dev-dependencies]
+lint = [
+    "ruff>=0.0.290",
+    "mypy>=1.5.1",
+    "black>=23.9.1",
+]
+dev = [
+    "jupyter>=1.0.0",
+]
 [build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+build-backend = "pdm.backend"
+requires = ["pdm-backend"]
