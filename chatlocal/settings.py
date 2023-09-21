@@ -2,12 +2,15 @@ from __future__ import annotations
 
 import os
 from enum import Enum
-from pathlib import Path
 from itertools import chain
-from typing import Dict, Iterator, List
+from pathlib import Path
+from typing import TYPE_CHECKING
 
 from loguru import logger
-from pydantic import BaseModel, root_validator
+from pydantic import BaseModel, model_validator
+
+if TYPE_CHECKING:
+    from collections.abc import Iterator
 
 
 class FileType(Enum):
@@ -28,29 +31,42 @@ class FormattedBase(BaseModel):
 
 
 class ParserSettings(FormattedBase):
-    textfiles: List[FileType]
-    wordfiles: List[FileType]
-    pdffiles: List[FileType]
-    jupyterfiles: List[FileType]
-    ignore_dirs = ['.git', '__pycache__', '.ipynb_checkpoints', '.pytest_cache', '.mypy_cache', '.vscode', 'venv', 'env']
+    textfiles: list[FileType]
+    wordfiles: list[FileType]
+    pdffiles: list[FileType]
+    jupyterfiles: list[FileType]
+    ignore_dirs: list[str] = [  # noqa: RUF012
+        ".git",
+        "__pycache__",
+        ".ipynb_checkpoints",
+        ".pytest_cache",
+        ".mypy_cache",
+        ".vscode",
+        "venv",
+        "env",
+    ]
 
     def __iter__(self) -> Iterator[FileType]:  # type: ignore
         return chain(self.textfiles, self.wordfiles, self.pdffiles, self.jupyterfiles)
 
-
     @classmethod
-    def from_filetypes(cls, filetypes: List[FileType]) -> ParserSettings:
-        defaulttextfiles: List[FileType] = [FileType.MD, FileType.TEXT, FileType.LATEX]
-        defaultwordfiles: List[FileType] = [FileType.DOCX]
-        defaultpdffiles: List[FileType] = [FileType.PDF]
-        defaultjupyterfiles: List[FileType] = [FileType.JUPYTER]
+    def from_filetypes(cls, filetypes: list[FileType]) -> ParserSettings:
+        defaulttextfiles: list[FileType] = [FileType.MD, FileType.TEXT, FileType.LATEX]
+        defaultwordfiles: list[FileType] = [FileType.DOCX]
+        defaultpdffiles: list[FileType] = [FileType.PDF]
+        defaultjupyterfiles: list[FileType] = [FileType.JUPYTER]
 
         textfiles = [ft for ft in filetypes if ft in defaulttextfiles]
         wordfiles = [ft for ft in filetypes if ft in defaultwordfiles]
         pdffiles = [ft for ft in filetypes if ft in defaultpdffiles]
         jupyterfiles = [ft for ft in filetypes if ft in defaultjupyterfiles]
 
-        return cls(textfiles=textfiles, wordfiles=wordfiles, pdffiles=pdffiles, jupyterfiles=jupyterfiles)
+        return cls(
+            textfiles=textfiles,
+            wordfiles=wordfiles,
+            pdffiles=pdffiles,
+            jupyterfiles=jupyterfiles,
+        )
 
 
 class Document(FormattedBase):
@@ -73,8 +89,9 @@ class VectorStoreSettings(FormattedBase):
             this is 4096 for the OpenAI GPT-4 model, and with a rough 1:4 ratio of
             words to token, this is about 1024 words.
         separator (str): The separator to use when splitting the text, eg '\\n'
-        cache (Path, optional): The path to the cache directory. Defaults to $HOME/.cache/chatlocal
-        store_file (Path, optional): The path to the picklefile to save the vectorstore to.
+        cache (Path, optional): The path to the cache directory.
+            Defaults to $HOME/.cache/chatlocal
+        store_file (Path, optional): The path to save the vectorstore.
 
     Returns:
         _type_: _description_
@@ -82,14 +99,16 @@ class VectorStoreSettings(FormattedBase):
 
     chunk_size: int
     separator: str
-    cache: Path = Path(os.getenv("CACHE_DIR", Path.home() / ".cache" / "chatlocal"))
+    cache: Path = Path(
+        os.getenv("CACHE_DIR", Path.home() / ".cache" / "chatlocal"),  # noqa: PLW1508
+    )
     store_file: Path
     modeltype: ModelType
 
-    @root_validator
-    def check_path(cls, values: Dict) -> Dict:  # noqa: N805
-        cache = values.get("cache").resolve()
+    @model_validator(mode="after")
+    def check_passwords_match(self) -> VectorStoreSettings:
+        cache = self.cache
         if not cache.exists():
             logger.info(f"cache did not exist. Creating at {cache}.")
             cache.mkdir(parents=True)
-        return values
+        return self

@@ -2,35 +2,37 @@ from __future__ import annotations
 
 import pickle
 from pathlib import Path
-from typing import TYPE_CHECKING, Dict, List
+from typing import TYPE_CHECKING
 
 import faiss
 from langchain.embeddings import HuggingFaceEmbeddings, OpenAIEmbeddings
-from langchain.embeddings.base import Embeddings
 from langchain.text_splitter import CharacterTextSplitter
 from langchain.vectorstores import FAISS
 from loguru import logger
 
-from chatlocal.dataloader import DataLoader
 from chatlocal.settings import ModelType, VectorStoreSettings
 
 if TYPE_CHECKING:
     from dataloader import DataStore
+    from langchain.embeddings.base import Embeddings
+
+    from chatlocal.dataloader import DataLoader
 
 storesettings = VectorStoreSettings(
     chunk_size=1500,
     separator="\n",
-    store_file=Path("vectorstore.pkl"),
+    store_file=Path("scepa.pkl"),
     modeltype=ModelType.OPENAI,
 )
 
 
 class VectorStore:
-    def __init__(self, settings: VectorStoreSettings = storesettings):
+    def __init__(self, settings: VectorStoreSettings = storesettings) -> None:
         self.chunk_size = settings.chunk_size
         self.separator = settings.separator
         self.text_splitter = CharacterTextSplitter(
-            chunk_size=self.chunk_size, separator=self.separator
+            chunk_size=self.chunk_size,
+            separator=self.separator,
         )
         self.modeltype = settings.modeltype
         self.cache = settings.cache
@@ -39,7 +41,7 @@ class VectorStore:
         self.initialized = False
         self.stepsize = 100
 
-    def chunk_datastore(self, datastore: DataStore) -> Dict[str, List[str]]:
+    def chunk_datastore(self, datastore: DataStore) -> dict[str, list[str]]:
         docs = []
         metadatas = []
         logger.info(f"Building vectorstore from {len(datastore)} documents")
@@ -58,7 +60,9 @@ class VectorStore:
 
         logger.info(f"Initailizing vectorstore for first {self.stepsize} documents")
         self.store = FAISS.from_texts(
-            texts=docs[: self.stepsize], embedding=embedding, metadatas=metadatas[: self.stepsize]  # type: ignore
+            texts=docs[: self.stepsize],
+            embedding=embedding,
+            metadatas=metadatas[: self.stepsize],  # type: ignore
         )
         for i in range(self.stepsize, len(docs), self.stepsize):
             logger.info(f"Adding range {i}-{i+self.stepsize} to vectorstore")
@@ -74,7 +78,8 @@ class VectorStore:
     def add_documents(self, datastore: DataStore) -> None:
         """Adding additional documents to the vectorstore."""
         if not self.initialized:
-            raise ValueError("Vectorstore not initialized. Run build() first.")
+            msg = "Vectorstore not initialized. Run build() first."
+            raise ValueError(msg)
         docs = []
         metadatas = []
         logger.info(f"Adding {len(datastore)} new documents to vectorstore")
@@ -90,15 +95,15 @@ class VectorStore:
             model_name = "sentence-transformers/all-mpnet-base-v2"
             model_kwargs = {"device": "cpu"}
             encode_kwargs = {"normalize_embeddings": False}
-            hf = HuggingFaceEmbeddings(
+            return HuggingFaceEmbeddings(
                 model_name=model_name,
                 model_kwargs=model_kwargs,
                 encode_kwargs=encode_kwargs,
             )
-            return hf
         if self.modeltype == ModelType.OPENAI:
             return OpenAIEmbeddings()
-        raise ValueError("Model type not supported")
+        msg = "Model type not supported"
+        raise ValueError(msg)
 
     def get(self) -> FAISS:
         return self.store
@@ -121,7 +126,9 @@ class VectorStore:
 
     @classmethod
     def from_dataloader(
-        cls, dataloader: DataLoader, settings: VectorStoreSettings = storesettings
+        cls,
+        dataloader: DataLoader,
+        settings: VectorStoreSettings = storesettings,
     ) -> VectorStore:
         """Construct a VectorStore from a DataStore."""
         vectorstore = cls(settings=settings)  # type: ignore
