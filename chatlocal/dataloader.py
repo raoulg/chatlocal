@@ -1,19 +1,32 @@
 from __future__ import annotations
 
-from pathlib import Path
-from typing import Iterator, List
-
-from docx import Document as WordDocument
-import pdftotext
-from loguru import logger
 import json
+import os
+from pathlib import Path
+from typing import TYPE_CHECKING
+
+import pdftotext
+import toml
+from docx import Document as WordDocument
+from loguru import logger
 
 from chatlocal.settings import Document, FileType, ParserSettings
+
+if TYPE_CHECKING:
+    from collections.abc import Iterator
+
+
+def read_toml() -> dict:
+    # TODO move default env variables to a more central place
+    tomlfile = os.getenv("CHATLOCAL_CONFIG", Path("chatlocal.toml"))
+    with tomlfile.open() as f:
+        return toml.loads(f.read())
+
 
 
 class DataStore:
     def __init__(self) -> None:
-        self.data: List[Document] = []
+        self.data: list[Document] = []
         self._index: int = 0
 
     def add(self, document: Document) -> None:
@@ -62,55 +75,64 @@ class Parser:
         if ftype in self.settings.jupyterfiles:
             return self.parse_jupyter(source)
 
-        raise ValueError(f"Filetype {type} not supported")
+        msg = f"Filetype {type} not supported"
+        raise ValueError(msg)
 
     def parse_text(self, source: Path) -> Document:
-        with open(source, "r") as f:
+        with open(source) as f:
             content = f.read()
-        document = Document(text=content, source=source)
-        return document
+        return Document(text=content, source=source)
 
     def parse_word(self, source: Path) -> Document:
         worddoc = WordDocument(source)
         content = ""
         for par in worddoc.paragraphs:
             content += par.text + "\n"
-        document = Document(text=content, source=source)
-        return document
+        return Document(text=content, source=source)
 
     def parse_pdf(self, source: Path) -> Document:
         try:
             with open(source, "rb") as f:
                 pdf = pdftotext.PDF(f)
             content = "\n\n".join(pdf)
-            document = Document(text=content, source=source)
-            return document
+            return Document(text=content, source=source)
         except Exception as e:
             logger.error(f"Error parsing PDF {source}: {e}")
 
     def parse_jupyter(self, source: Path) -> Document:
-        with open(source, "r") as f:
+        with open(source) as f:
             raw = json.load(f)
-        content_: List[str] = ["".join(cell['source']) for cell in raw['cells'] if 'source' in cell]
+        content_: list[str] = [
+            "".join(cell["source"]) for cell in raw["cells"] if "source" in cell
+        ]
         # join the list of strings into a single string
         content = "".join(content_)
 
-        document = Document(text=content, source=source)
-        return document
+        return Document(text=content, source=source)
 
 
 class DataLoader:
-    def __init__(self, filetypes: List[FileType] = [FileType.MD]) -> None:
-        logger.info(f"Initializing Dataloader for files of type {filetypes}...")
+    def __init__(self, filetypes: list[FileType] | None = None) -> None:
+        if filetypes is None:
+            filetypes = [FileType.MD]
+        logger.info(
+            "Initializing Dataloader for files of "
+            f"type {[ft.value for ft in filetypes]}"
+        )
         self.filetypes = filetypes
         self.datastore = DataStore()
         self.parser = Parser(ParserSettings.from_filetypes(filetypes))
+        logger.info(f"Created Dataloader for types {self.parser.settings}")
 
     def load_files(self, path: Path) -> None:
         if path.exists() is False:
-            raise FileNotFoundError(f"{path} does not exist")
+            msg = f"{path} does not exist"
+            raise FileNotFoundError(msg)
         if path.is_dir() is False:
-            raise NotADirectoryError(f"{path} is not a directory")
+            msg = f"{path} is not a directory"
+            raise NotADirectoryError(msg)
+
+        logger.info(f"Collecting files from {path}...")
 
         notepaths = self.walk_dir(path)
         num_docs = 0
@@ -123,8 +145,9 @@ class DataLoader:
                 skipped.add(file_extension)
                 num_skipped += 1
                 continue
+            ftype = FileType(file_extension)
 
-            document = self.parser(source, FileType(file_extension))
+            document = self.parser(source, ftype)
             if len(document.text) > 0:
                 self.datastore.add(document)
                 num_docs += 1
