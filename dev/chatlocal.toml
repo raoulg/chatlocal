@@ -1,0 +1,5 @@
+folder = "~/Documents/SCEPA/papers"
+store_file = "scepa.pkl"
+
+filetypes = [".md", ".pdf"]
+chunksize = 1500
