@@ -75,7 +75,7 @@ class Document(FormattedBase):
 
 class Chunk(BaseModel):
     docs: list[str]
-    metadatas: list[str]
+    metadatas: list[dict]
 
 
 class ModelType(Enum):
