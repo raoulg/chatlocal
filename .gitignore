@@ -3,3 +3,5 @@
 */*.pyc
 /dist/*
 .mypy_cache/*
+.pdm-python
+.python-version
